@@ -81,9 +81,33 @@ merge_df["grade_num"] = merge_df["grade"].apply(grade_num)
 
   
 merge_df.word.value_counts().head(8)
-merge_df.to_csv('merge.csv')
 
 vc_words = ["personal","debt","consolidation","credit","home","car","bills","wedding"]
+
+import nltk
+from nltk.corpus import wordnet
+
+merge_df['cat'] = np.nan
+
+def syns(target_word):
+    wedding_syn = []
+    for syn in wordnet.synsets(target_word):
+        for l in syn.lemmas():
+            wedding_syn.append(l.name())
+    #maybe add if thens to add weird corner cases to the syn list
+    #like motorcycle for car
+    if target_word=='car':
+        wedding_syn.append('motorcycle')
+    
+    for i, row in merge_df.iterrows():
+        if merge_df['word'][i] in wedding_syn:
+            row['cat']=target_word
+            
+syns('wedding')
+syns('home')
+syns('car')
+
+
 
 #for creating plotly graph in plotly
 import plotly
