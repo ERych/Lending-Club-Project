@@ -1,0 +1,32 @@
+library(MASS)
+library(e1071)
+
+dataset <- read.csv('svm_df.csv')
+dataset <- dataset[,2:4]
+
+model <- svm(cat~., data = dataset)
+print (model)
+summary (model)
+plot (model, dataset)
+
+#create training/test data
+index <- 1:nrow(dataset)
+testindex <- sample(index, trunc(length(index)*30/100))
+testset <- dataset[testindex,]
+trainset <- dataset[-testindex,]
+
+#predition based on test data
+prediction <- predict(model, testset[,-3])
+tab <- table(pred = prediction, true = testset[,3])
+tab
+
+#see the various gamma and cost results
+tuned <- tune.svm(cat~., data = trainset, gamma = 10^(-6:-1), cost = 10^(-1:1))
+summary(tuned)
+
+#build second model
+model2  <- svm(cat~., data = trainset, kernel = "radial", gamma = 0.1, cost = 10) 
+summary(model2)
+prediction <- predict(model2, testset[,-3])
+tab <- table(pred = prediction, true = testset[,3])
+tab
