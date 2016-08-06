@@ -68,14 +68,18 @@ merge_df["loan_stat_num"] = merge_df["loan_status"].apply(loan_stat_num)
                
 def grade_num(x):
     if x == "A":
-        return 5
+        return 7
     if x == "B":
-        return 4
+        return 6
     if x == "C":
-        return 3
+        return 5
     if x == "D":
-        return 2
+        return 4
     if x == "E":
+        return 3
+    if x == "F":
+        return 2
+    if x == "G":
         return 1
 merge_df["grade_num"] = merge_df["grade"].apply(grade_num)
 
@@ -128,7 +132,6 @@ svm_df.to_csv('svm_df.csv')
 #submit zip folder containing:
 #code, report, dataset 
 
-'''regression section'''
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.cross_validation import train_test_split
@@ -136,48 +139,42 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import accuracy_score
 import math
 
-Train, Test = train_test_split(cat, test_size=0.30, random_state=42)
+category_list = ["home", "wedding", "medical", "business", "car", "vacation"]
+def Loan_Function():
+    Q1 = input("Please choose a loan category: home, wedding, medical, business, car, vacation:" )
+    if Q1.lower() in category_list:
+        Q1 = Q1.lower()
+        df = cat.copy(deep=True)
+        df['cat'] = Q1
+        
+        '''separate testing and training data'''    
+        Train, Test = train_test_split(data, test_size=0.30, random_state=42)
+        xTrain =Train["int_rate"]
+        xTest = Test["int_rate"]
+        yTrain = Train["loan_stat_num"]
+        yTest = Test["loan_stat_num"]
+        xTrain = xTrain.reshape(-1,1)
+        xTest = xTest.reshape(-1,1)
+        yTrain = yTrain.astype(np.float)
+        yTest  = yTest.astype(np.float)
+        
+        '''build model'''
+        Model1 = LR()
+        Model1.fit(xTrain, yTrain)
+        yPredTest = Model1.predict(xTest)
+        A = Model1.coef_[0]
+        b = Model1.intercept_
+        
+        print ("Here's the formula: y =  1/(1+(math.exp(-({0}X +{1}))))".format(A,b))
+        Q2 = input("What is the interest rate of the loan?")
+        int_rate = float(Q2)
+        X = Model1.predict_proba(int_rate)
+        print ("For loans in the {0} category, at an intertest rate of {1}, the probability of success is {2} and probability of failue is {3}".format(Q1,int_rate,X[:,1],X[:,0]))
 
-xTrain =Train["int_rate"]
-xTest = Test["int_rate"]
-yTrain = Train["loan_stat_num"]
-yTest = Test["loan_stat_num"]
+    else:
+        print ("That is not a possible category. Please check your spelling or choose again!")
 
-xTrain = xTrain.reshape(-1,1)
-#change to one dimension
-xTest = xTest.reshape(-1,1)
-#change to one dimension 
-yTrain = yTrain.astype(np.float)
-yTest  = yTest.astype(np.float)
-plt.scatter(xTrain, yTrain, color='black')
-plt.show()
-
-Model1 = LR()
-Model1.fit(xTrain, yTrain)
-yPredTest = Model1.predict(xTest)
-A = Model1.coef_[0]
-b = Model1.intercept_
-A
-b
-
-accuracy_score(yPredTest,yTest)
-
-plt.scatter(xTrain.ravel(), yTrain, color='black', zorder=20 , alpha = 0.5)
-
-X1 = []
-y = []
-
-for x in range(-10,10,1):
-    y.append(1/(1+(math.exp(-(A*x+b)))))
-    X1.append(x)
-    
-plt.plot(X1,y)
-plt.ylabel('target variable')
-plt.xlabel('predictor variable')
-plt.show()
-
-
-
+Loan_Function()
 
 
 #for creating plotly graph in plotly
