@@ -1,10 +1,13 @@
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 import sklearn
 from string import punctuation
+from pandas import Series, DataFrame
+
+from sklearn import metrics
+from sklearn.cross_validation import cross_val_score
 
 data = pd.read_csv("/Users/lizdeschaine/Documents/DATS6102/loan.csv", usecols=("purpose", "title","id"))
 
@@ -58,7 +61,7 @@ def loan_stat_num(x):
     if x == "In Grace Period":
         return 1
     if x == "Issued":
-        return 1
+        return 0
     if x == "Late (16-30 days)":
         return 0
     if x == "Late (31-120 days)":
@@ -83,8 +86,6 @@ def grade_num(x):
         return 1
 merge_df["grade_num"] = merge_df["grade"].apply(grade_num)
 
-  
-merge_df.word.value_counts().head(8)
 
 vc_words = ["personal","debt","consolidation","credit","home","car","bills","wedding"]
 
@@ -95,16 +96,18 @@ merge_df['cat'] = ""
 merge_df['cat'] = merge_df['cat'].astype(str)
 
 def syns(target_word):
-    wedding_syn = []
+    local_list = []
     for syn in wordnet.synsets(target_word):
         for l in syn.lemmas():
-            wedding_syn.append(l.name())
+            local_list.append(l.name())
     #maybe add if thens to add weird corner cases to the syn list
     #like motorcycle for car
     if target_word=='car':
-        wedding_syn.append('motorcycle')
+        local_list.append('motorcycle')
+    if target_word=='medical':
+        local_list.append('dental')
     for i, row in merge_df.iterrows():
-        if merge_df['word'][i] in wedding_syn:
+        if merge_df['word'][i] in local_list:
             merge_df.set_value(i,'cat',target_word)
             
 syns('wedding')
@@ -114,24 +117,8 @@ syns('medical')
 syns('vacation')
 syns('business')
 
-merge_df['cat'].value_counts()
 
-
-#prepping for scm
-cat = merge_df.loc[merge_df['cat'] != ""]
-cat = cat.loc[cat['cat'] == "home"]
-
-
-#wedding and car work best
-
-svm_df = cat[["int_rate","dti","cat"]]
-
-svm_df.to_csv('svm_df.csv')
-
-
-#submit zip folder containing:
-#code, report, dataset 
-
+'''regression section'''
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.cross_validation import train_test_split
@@ -174,47 +161,6 @@ def Loan_Function():
     else:
         print ("That is not a possible category. Please check your spelling or choose again!")
 
+
 Loan_Function()
 
-
-#for creating plotly graph in plotly
-import plotly
-import plotly.plotly as py
-import plotly.graph_objs as go
-plotly.tools.set_credentials_file(username='ERych', api_key='7fwe7xtrqt')
- 
-
-x = []
-for item in vc_words:
-    x.append(merge_df.loc[merge_df['word'] == item, "loan_stat_num"].mean())
-    
-y = []
-for item in vc_words:
-    y.append(merge_df.loc[merge_df['word'] == item, "grade_num"].mean())
-
-size = []
-for item in vc_words:
-    num = merge_df.loc[merge_df['word'] == item, "loan_amnt"].mean()
-    num1 = num/100
-    size.append(num1)
-
-name = []
-for item in vc_words:
-    name.append(item)
-
-trace0 = go.Scatter(
-    x=x,
-    y=y,
-    text=['Personal', 'Debt', 'Consolidation', 'Credit', 'Home;','Car','Bills','Wedding'],
-    mode='markers',
-    marker=dict(
-        color=['rgb(93, 164, 214)', 'rgb(255, 144, 14)',  'rgb(44, 160, 101)', 'rgb(255, 65, 54)'],
-        size=size,
-    )
-)
-
-data = [trace0]
-py.plot(data, filename='bubblechart-text')
-
-
-#testing the github collaborative environment
